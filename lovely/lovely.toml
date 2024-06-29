@@ -1,0 +1,183 @@
+[manifest]
+version = "1.0.0"
+dump_lua = true
+priority = 0
+
+[[patches]]
+[patches.pattern]
+target = 'main.lua'
+pattern = "for i = #rank_name_mapping, 1, -1 do"
+position = 'at'
+match_indent = true
+overwrite = true
+payload = '''for _, k in ipairs(shorthands_sorted) do'''
+
+[[patches]]
+[patches.pattern]
+target = 'main.lua'
+pattern = "local rank_name_mapping = SMODS.Rank.obj_buffer"
+position = 'after'
+match_indent = true
+payload = '''
+--- [MOD:[MJST.LIB][PATCH START][G.UIDEF.view_deck]] Ranks with the same shorthand are counted together
+local shorthand_indexes = {}
+local shorthand_rank_tallies = {}
+local shorthand_mod_rank_tallies = {}
+local shorthands_sorted = {}
+for i = #rank_name_mapping, 1, -1 do
+    if SMODS.Ranks[rank_name_mapping[i]] and SMODS.Ranks[rank_name_mapping[i]].shorthand then
+        shorthand_indexes[SMODS.Ranks[rank_name_mapping[i]].shorthand] = shorthand_indexes[SMODS.Ranks[rank_name_mapping[i]].shorthand] or {}
+        table.insert(shorthand_indexes[SMODS.Ranks[rank_name_mapping[i]].shorthand], i)
+    end
+end
+for k, v in pairs(shorthand_indexes) do
+    shorthand_rank_tallies[k] = 0
+    shorthand_mod_rank_tallies[k] = 0
+end
+for _, v in ipairs(G.playing_cards) do
+    if v.ability.name ~= 'Stone Card' and (not unplayed_only or ((v.area and v.area == G.deck) or v.ability.wheel_flipped)) then
+        shorthand_rank_tallies[SMODS.Ranks[v.base.value].shorthand] = shorthand_rank_tallies[SMODS.Ranks[v.base.value].shorthand] + 1
+        if not v.debuff then shorthand_mod_rank_tallies[SMODS.Ranks[v.base.value].shorthand] = shorthand_mod_rank_tallies[SMODS.Ranks[v.base.value].shorthand] + 1 end
+    end
+end
+for k, v in pairs(shorthand_indexes) do
+    if k ~= '2' and
+    k ~= '3' and
+    k ~= '4' and
+    k ~= '5' and
+    k ~= '6' and
+    k ~= '7' and
+    k ~= '8' and
+    k ~= '9' and
+    k ~= '10' and
+    k ~= 'J' and
+    k ~= 'Q' and
+    k ~= 'K' and
+    k ~= 'A' then
+        shorthands_sorted[#shorthands_sorted + 1] = k
+    end
+end
+shorthands_sorted[#shorthands_sorted + 1] = 'A'
+shorthands_sorted[#shorthands_sorted + 1] = 'K'
+shorthands_sorted[#shorthands_sorted + 1] = 'Q'
+shorthands_sorted[#shorthands_sorted + 1] = 'J'
+shorthands_sorted[#shorthands_sorted + 1] = '10'
+shorthands_sorted[#shorthands_sorted + 1] = '9'
+shorthands_sorted[#shorthands_sorted + 1] = '8'
+shorthands_sorted[#shorthands_sorted + 1] = '7'
+shorthands_sorted[#shorthands_sorted + 1] = '6'
+shorthands_sorted[#shorthands_sorted + 1] = '5'
+shorthands_sorted[#shorthands_sorted + 1] = '4'
+shorthands_sorted[#shorthands_sorted + 1] = '3'
+shorthands_sorted[#shorthands_sorted + 1] = '2'
+--- [MOD:[MJST.LIB][PATCH END][G.UIDEF.view_deck]] Ranks with the same shorthand are counted together'''
+
+[[patches]]
+[patches.pattern]
+target = 'main.lua'
+pattern = "local mod_delta = mod_rank_tallies[i] ~= rank_tallies[i]"
+position = 'at'
+match_indent = true
+overwrite = true
+payload = '''local mod_delta = shorthand_mod_rank_tallies[k] ~= shorthand_rank_tallies'''
+
+[[patches]]
+[patches.pattern]
+target = 'main.lua'
+pattern = "{ n = G.UIT.T, config = { text = SMODS.Ranks[rank_name_mapping[i]].shorthand, colour = G.C.JOKER_GREY, scale = 0.35, shadow = true } },"
+position = 'at'
+match_indent = true
+overwrite = true
+payload = '''{ n = G.UIT.T, config = { text = k, colour = G.C.JOKER_GREY, scale = 0.35, shadow = true } },'''
+
+[[patches]]
+[patches.pattern]
+target = 'main.lua'
+pattern = "{ n = G.UIT.O, config = { object = DynaText({ string = { { string = '' .. rank_tallies[i], colour = flip_col }, { string = '' .. mod_rank_tallies[i], colour = G.C.BLUE } }, colours = { G.C.RED }, scale = 0.4, y_offset = -2, silent = true, shadow = true, pop_in_rate = 10, pop_delay = 4 }) } } or"
+position = 'at'
+match_indent = true
+overwrite = true
+payload = '''{ n = G.UIT.O, config = { object = DynaText({ string = { { string = '' .. shorthand_rank_tallies[k], colour = flip_col }, { string = '' .. shorthand_mod_rank_tallies[k], colour = G.C.BLUE } }, colours = { G.C.RED }, scale = 0.4, y_offset = -2, silent = true, shadow = true, pop_in_rate = 10, pop_delay = 4 }) } }'''
+
+[[patches]]
+[patches.pattern]
+target = 'main.lua'
+pattern = "{ n = G.UIT.T, config = { text = rank_tallies[rank_name_mapping[i]], colour = flip_col, scale = 0.45, shadow = true } },"
+position = 'at'
+match_indent = true
+overwrite = true
+payload = ''''''
+
+[[patches]]
+[patches.pattern]
+target = 'main.lua'
+pattern = "rank_name_mapping[#rank_name_mapping + 1] = SMODS.Rank.obj_buffer[i]"
+position = 'at'
+match_indent = true
+overwrite = true
+payload = '''if SMODS.Ranks[SMODS.Rank.obj_buffer[i]].shorthand ~= 'Jkr' then
+    rank_name_mapping[#rank_name_mapping + 1] = SMODS.Rank.obj_buffer[i]
+end'''
+
+#
+
+# [[patches]]
+# [patches.pattern]
+# target = 'main.lua'
+# pattern = "suit_labels[#suit_labels + 1] = {"
+# position = 'before'
+# match_indent = true
+# payload = '''
+# --- [MOD:[MJST.LIB][PATCH START][G.UIDEF.deck_preview]] Ranks with the same shorthand are counted together
+# local shorthand_indexes = {}
+# local shorthand_rank_tallies = {}
+# local shorthands_sorted = {}
+# for i = #rank_name_mapping, 1, -1 do
+#     if SMODS.Ranks[rank_name_mapping[i]] and SMODS.Ranks[rank_name_mapping[i]].shorthand then
+#         shorthand_indexes[SMODS.Ranks[rank_name_mapping[i]].shorthand] = shorthand_indexes[SMODS.Ranks[rank_name_mapping[i]].shorthand] or {}
+#         table.insert(shorthand_indexes[SMODS.Ranks[rank_name_mapping[i]].shorthand], i)
+#     end
+# end
+# for k, v in pairs(shorthand_indexes) do
+#     shorthand_rank_tallies[k] = 0
+#     shorthand_mod_rank_tallies[k] = 0
+# end
+# for _, v in ipairs(G.playing_cards) do
+#     if (v.area and v.area == G.deck) or v.ability.wheel_flipped then
+#         if v.ability.effect == 'Stone Card' then
+#         else
+#             shorthand_rank_tallies[SMODS.Ranks[v.base.value].shorthand] = shorthand_rank_tallies[SMODS.Ranks[v.base.value].shorthand] + 1
+#         end
+#     end
+# end
+# for k, v in pairs(shorthand_indexes) do
+#     if k ~= '2' and
+#     k ~= '3' and
+#     k ~= '4' and
+#     k ~= '5' and
+#     k ~= '6' and
+#     k ~= '7' and
+#     k ~= '8' and
+#     k ~= '9' and
+#     k ~= '10' and
+#     k ~= 'J' and
+#     k ~= 'Q' and
+#     k ~= 'K' and
+#     k ~= 'A' then
+#         shorthands_sorted[#shorthands_sorted + 1] = k
+#     end
+# end
+# shorthands_sorted[#shorthands_sorted + 1] = 'A'
+# shorthands_sorted[#shorthands_sorted + 1] = 'K'
+# shorthands_sorted[#shorthands_sorted + 1] = 'Q'
+# shorthands_sorted[#shorthands_sorted + 1] = 'J'
+# shorthands_sorted[#shorthands_sorted + 1] = '10'
+# shorthands_sorted[#shorthands_sorted + 1] = '9'
+# shorthands_sorted[#shorthands_sorted + 1] = '8'
+# shorthands_sorted[#shorthands_sorted + 1] = '7'
+# shorthands_sorted[#shorthands_sorted + 1] = '6'
+# shorthands_sorted[#shorthands_sorted + 1] = '5'
+# shorthands_sorted[#shorthands_sorted + 1] = '4'
+# shorthands_sorted[#shorthands_sorted + 1] = '3'
+# shorthands_sorted[#shorthands_sorted + 1] = '2'
+# --- [MOD:[MJST.LIB][PATCH END][G.UIDEF.deck_preview]] Ranks with the same shorthand are counted together'''
