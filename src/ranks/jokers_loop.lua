@@ -1530,16 +1530,5 @@ for k, v in pairs(G.mjst_config.joker_deck.jokers) do
         shorthand = v.shorthand or "Jkr",
         card_key = v.card_key or k,
         disabled = false,
-        populate = v.populate or function(self)
-            for _, other in pairs(SMODS.Suits) do
-                if not other.disabled and other.key == "suit_" .. SMODS.current_mod.id .. "_jokers" then
-                    other:update_p_card(self)
-                end
-            end
-            self.disabled = nil
-        end,
-        inject = function(self)
-            self:populate()
-        end,
     }
 end

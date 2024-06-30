@@ -17,8 +17,6 @@ SMODS.Back {
     config = {
         consumables = {
         },
-        jokers_price = {mult = 0.5},
-        buffon_packs_price = {mult = 0.5},
         starting_jokers = {
             {key = "Joker"},
             {key = "Chaos the Clown"},
